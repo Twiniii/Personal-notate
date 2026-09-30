@@ -7,12 +7,8 @@ public class Note
     String category;
     int priority;
 
-    public Note(
-        String title,
-        String text,
-        String category,
-        int priority
-    )
+   
+    public Note(String title, String text, String category, int priority)
     {
         this.title = title;
         this.text = text;
@@ -20,23 +16,27 @@ public class Note
         this.priority = priority;
     }
 
+
     @Override
     public String toString()
     {
         return "Назва: " + this.title
-            + "\nОпис: " + this.text
+            + "\nТекст: " + this.text
             + "\nКатегорія: " + this.category
             + "\nПріоритет: " + this.priority;
     }
 
+    
     @Override
     public boolean equals(Object object)
     {
+        // Це той самий об’єкт.
         if (this == object)
         {
             return true;
         }
 
+     
         if (object == null || getClass() != object.getClass())
         {
             return false;
@@ -50,14 +50,10 @@ public class Note
             && this.priority == other.priority;
     }
 
+  
     @Override
     public int hashCode()
     {
-        return Objects.hash(
-            title,
-            text,
-            category,
-            priority
-        );
+        return Objects.hash(title, text, category, priority);
     }
 }
