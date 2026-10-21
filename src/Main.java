@@ -12,6 +12,11 @@ import interfaces.Describable;
 import interfaces.NoteFormatter;
 import models.Note;
 import services.NoteDisplay;
+import services.NoteTypeGuide;
+import demo.InheritanceDemo;
+import models.TextNote;
+import models.ChecklistNote;
+import models.ShoppingListNote;
 
 public class Main
 {
@@ -41,6 +46,8 @@ public class Main
                 System.out.println("7. Змінити формат відображення");
                 System.out.println("8. Порівняти формати однієї нотатки");
                 System.out.println("9. Статистика доданих нотаток");
+                System.out.println("10. Навчальна демонстрація ЛР №6");
+                System.out.println("11. Підказка для типу нотатки");
                 System.out.println("0. Вийти");
                 System.out.print("Оберіть дію: ");
                 String choice = scanner.nextLine();
@@ -172,6 +179,14 @@ public class Main
                 {
                     printStatistics(statistics);
                 }
+                else if (choice.equals("10"))
+                {
+                    InheritanceDemo.run();
+                }
+                else if (choice.equals("11"))
+                {
+                    showTypeGuide(scanner, notebook);
+                }
                 else if (choice.equals("0"))
                 {
                     break;
@@ -195,6 +210,10 @@ public class Main
 
     static Note readNote(Scanner scanner) throws NoteException
     {
+        System.out.println("1. Текстова нотатка");
+        System.out.println("2. Список справ");
+        System.out.println("3. Список покупок");
+        int type = readInt(scanner, "Оберіть тип нотатки: ", 1, 3);
         System.out.print("Введіть назву нотатки: ");
         String title = scanner.nextLine();
         System.out.print("Введіть текст нотатки: ");
@@ -207,14 +226,37 @@ public class Main
             Integer.MIN_VALUE, Integer.MAX_VALUE);
         try
         {
-            return new Note(title, text, category, priority);
+            if (type == 1)
+            {
+                System.out.print("Джерело запису (Enter — не вказано): ");
+                String source = scanner.nextLine();
+                return new TextNote(title, text, category, priority, source);
+            }
+
+            int itemCount = readInt(scanner, "Скільки пунктів у списку (1–20): ", 1, 20);
+            String[] items = new String[itemCount];
+            boolean[] completed = new boolean[itemCount];
+            for (int i = 0; i < itemCount; i++)
+            {
+                System.out.print("Пункт №" + (i + 1) + ": ");
+                items[i] = scanner.nextLine();
+                completed[i] = readInt(scanner,
+                    "Уже виконано / придбано? (1 — так, 0 — ні): ", 0, 1) == 1;
+            }
+
+            if (type == 3)
+            {
+                System.out.print("Магазин (Enter — не вказано): ");
+                String store = scanner.nextLine();
+                return new ShoppingListNote(title, text, category, priority,
+                    items, completed, store);
+            }
+            return new ChecklistNote(title, text, category, priority, items, completed);
         }
         catch (NoteException error)
         {
-
             System.err.println("[Діагностика] Не вдалося створити Note: "
                 + error.getClass().getSimpleName());
-
             throw error;
         }
     }
@@ -358,6 +400,26 @@ public class Main
         {
             System.out.printf("Пріоритет %d: %d%n",
                 priority, statistics.getCountByPriority(priority));
+        }
+    }
+
+    static void showTypeGuide(Scanner scanner, Notebook notebook)
+    {
+        if (notebook.getNoteCount() == 0)
+        {
+            System.out.println("Поки немає створених нотаток.");
+            return;
+        }
+        Note[] notes = notebook.getNotes();
+        for (int i = 0; i < notes.length; i++)
+        {
+            System.out.printf("%d. %s%n", i + 1, notes[i].getTitle());
+        }
+        int number = readInt(scanner, "Оберіть нотатку (0 — назад): ",
+            0, notebook.getNoteCount());
+        if (number != 0)
+        {
+            System.out.println(NoteTypeGuide.describe(notebook.getNote(number)));
         }
     }
 }

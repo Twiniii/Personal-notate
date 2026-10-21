@@ -2,9 +2,10 @@ package models;
 
 import exceptions.InvalidTitleException;
 import exceptions.InvalidPriorityException;
+import diagnostics.ConstructorTrace;
 import java.util.Objects;
 
-public class Note
+public abstract sealed class Note permits TextNote, ChecklistNote
 {
 
     private final String title;
@@ -12,7 +13,7 @@ public class Note
     private final String category;
     private final int priority;
 
-    public Note(String title, String text, String category, int priority)
+    protected Note(String title, String text, String category, int priority)
         throws InvalidTitleException, InvalidPriorityException
     {
         if (title == null || title.isBlank())
@@ -34,6 +35,7 @@ public class Note
         this.text = text;
         this.category = category;
         this.priority = priority;
+        ConstructorTrace.log("Note: спільні поля");
     }
 
     public String getTitle()
@@ -51,10 +53,14 @@ public class Note
         return category;
     }
 
-    public int getPriority()
+    public final int getPriority()
     {
         return priority;
     }
+
+    public abstract String getTypeName();
+
+    public abstract String getSummary();
 
     @Override
     public String toString()
