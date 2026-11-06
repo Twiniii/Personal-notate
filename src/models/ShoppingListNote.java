@@ -8,18 +8,18 @@ public final class ShoppingListNote extends ChecklistNote
 {
     private final String store;
 
-    public ShoppingListNote(String title, String text, String category, int priority,
+    public ShoppingListNote(long id, String title, String text, String category, int priority,
         String[] items, String store) throws NoteException
     {
-        this(title, text, category, priority, items,
+        this(id, title, text, category, priority, items,
             items == null ? null : new boolean[items.length], store);
         ConstructorTrace.log("ShoppingListNote: короткий конструктор після this(...)");
     }
 
-    public ShoppingListNote(String title, String text, String category, int priority,
+    public ShoppingListNote(long id, String title, String text, String category, int priority,
         String[] items, boolean[] completed, String store) throws NoteException
     {
-        super(title, text, category, priority, items, completed);
+        super(id, title, text, category, priority, items, completed);
         this.store = Objects.requireNonNullElse(store, "");
         ConstructorTrace.log("ShoppingListNote: магазин");
     }
@@ -50,19 +50,13 @@ public final class ShoppingListNote extends ChecklistNote
     }
 
     @Override
-    public boolean equals(Object object)
+    public boolean hasSameContent(Note other)
     {
-        if (!super.equals(object))
+        if (!super.hasSameContent(other))
         {
             return false;
         }
-        ShoppingListNote other = (ShoppingListNote) object;
-        return Objects.equals(store, other.store);
-    }
-
-    @Override
-    public int hashCode()
-    {
-        return Objects.hash(super.hashCode(), store);
+        ShoppingListNote note = (ShoppingListNote) other;
+        return Objects.equals(store, note.store);
     }
 }

@@ -10,7 +10,7 @@ public class NoteDisplay
 
     public NoteDisplay(NoteFormatter formatter)
     {
-        setFormatter(formatter);
+        this.formatter = Objects.requireNonNull(formatter, "Формат не може бути null.");
     }
 
     public void setFormatter(NoteFormatter formatter)

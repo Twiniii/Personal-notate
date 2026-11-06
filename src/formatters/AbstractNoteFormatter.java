@@ -29,7 +29,7 @@ public abstract class AbstractNoteFormatter implements NoteFormatter, Describabl
 
     protected String titleLine(Note note)
     {
-        return "Назва: " + note.getTitle();
+        return "ID: " + note.getId() + " | Назва: " + note.getTitle();
     }
 
     @Override

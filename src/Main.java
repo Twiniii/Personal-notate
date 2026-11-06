@@ -1,205 +1,192 @@
-import java.util.Scanner;
 import java.util.InputMismatchException;
+import java.util.List;
 import java.util.NoSuchElementException;
-
+import java.util.Scanner;
+import demo.CrudDemo;
+import demo.InheritanceDemo;
+import exceptions.EntityNotFoundException;
 import exceptions.InvalidPriorityException;
 import exceptions.NoteException;
 import factories.NoteFormatterFactory;
-import observers.ConsoleNoteLogger;
-import observers.NoteStatisticsObserver;
-import services.Notebook;
+import interfaces.CRUDService;
 import interfaces.Describable;
 import interfaces.NoteFormatter;
+import models.Category;
+import models.ChecklistNote;
 import models.Note;
+import models.ShoppingListNote;
+import models.TextNote;
+import observers.ConsoleNoteLogger;
+import observers.NoteStatisticsObserver;
+import services.InMemoryCrudService;
+import services.InMemoryNoteService;
+import services.Notebook;
 import services.NoteDisplay;
 import services.NoteTypeGuide;
-import demo.InheritanceDemo;
-import models.TextNote;
-import models.ChecklistNote;
-import models.ShoppingListNote;
+import utils.EntityPrinter;
+import utils.IdGenerator;
 
 public class Main
 {
     public static void main(String[] args)
     {
         Scanner scanner = new Scanner(System.in);
-
         try
         {
-            Notebook notebook = new Notebook(100);
+            IdGenerator ids = new IdGenerator();
+            Notebook notebook = new Notebook(new InMemoryNoteService());
+            CRUDService<Category> categories = new InMemoryCrudService<>();
             NoteStatisticsObserver statistics = new NoteStatisticsObserver();
             notebook.addObserver(new ConsoleNoteLogger());
             notebook.addObserver(statistics);
             NoteDisplay display = new NoteDisplay(NoteFormatterFactory.create("1"));
-            System.out.println("   Personal - Notate   ");
 
             while (true)
             {
-                System.out.println();
-                System.out.println("Формат: " + display.getFormatName());
-                System.out.println("1. Додати нотатки");
-                System.out.println("2. Переглянути нотатки");
-                System.out.println("3. Показати та порахувати за пріоритетом");
-                System.out.println("4. Відсортувати за пріоритетом");
-                System.out.println("5. Знайти нотатку за повним збігом");
-                System.out.println("6. Відкрити нотатку за номером");
-                System.out.println("7. Змінити формат відображення");
-                System.out.println("8. Порівняти формати однієї нотатки");
-                System.out.println("9. Статистика доданих нотаток");
-                System.out.println("10. Навчальна демонстрація ЛР №6");
-                System.out.println("11. Підказка для типу нотатки");
-                System.out.println("0. Вийти");
-                System.out.print("Оберіть дію: ");
+                printMenu(display);
                 String choice = scanner.nextLine();
-
-                if (choice.equals("1"))
-                {
-                    if (notebook.getFreePlaces() == 0)
-                    {
-                        System.out.println("Масив нотаток заповнений.");
-                        continue;
-                    }
-                    int freePlaces = notebook.getFreePlaces();
-                    int amount = readInt(scanner,
-                        "Скільки нотаток додати (1–" + freePlaces + "): ",
-                        1, freePlaces);
-
-                    for (int i = 0; i < amount; i++)
-                    {
-                        boolean created = false;
-
-                        while (!created)
-                        {
-                            System.out.println("Нотатка №" + (notebook.getNoteCount() + 1));
-                            try
-                            {
-                                Note note = readNote(scanner);
-                                notebook.addNote(note);
-                                created = true;
-                            }
-                            catch (InvalidPriorityException error)
-                            {
-                                System.out.println(error.getMessage());
-                                System.out.println("Введений пріоритет: "
-                                    + error.getInvalidPriority());
-                                System.out.println("Введіть нотатку повторно.");
-                            }
-                            catch (NoteException error)
-                            {
-                                System.out.println(error.getMessage());
-                                System.out.println("Введіть нотатку повторно.");
-                            }
-                        }
-                    }
-                    System.out.println("Додано нотаток: " + amount);
-                }
-                else if (choice.equals("2"))
-                {
-                    printNotes(notebook.getNotes(), display);
-                }
-                else if (choice.equals("3"))
-                {
-                    if (notebook.getNoteCount() == 0)
-                    {
-                        System.out.println("Поки немає створених нотаток.");
-                        continue;
-                    }
-                    int priority = readInt(scanner,
-                        "Введіть пріоритет для пошуку (1–10): ", 1, 10);
-                    int foundCount = 0;
-                    Note[] notes = notebook.getNotes();
-                    for (int i = 0; i < notebook.getNoteCount(); i++)
-                    {
-                        if (notes[i].getPriority() == priority)
-                        {
-                            System.out.println("Нотатка №" + (i + 1));
-                            display.show(notes[i]);
-                            foundCount++;
-                        }
-                    }
-                    if (foundCount == 0)
-                    {
-                        System.out.println("Нотаток із таким пріоритетом не знайдено.");
-                    }
-                    System.out.println("Кількість знайдених: " + foundCount);
-                }
-                else if (choice.equals("4"))
-                {
-                    if (notebook.getNoteCount() == 0)
-                    {
-                        System.out.println("Поки немає створених нотаток.");
-                        continue;
-                    }
-                    System.out.println("До сортування:");
-                    printNotes(notebook.getNotes(), display);
-                    notebook.sortByPriority();
-                    System.out.println("Після сортування:");
-                    printNotes(notebook.getNotes(), display);
-                }
-                else if (choice.equals("5"))
-                {
-                    if (notebook.getNoteCount() == 0)
-                    {
-                        System.out.println("Поки немає створених нотаток.");
-                        continue;
-                    }
-                    try
-                    {
-                        System.out.println("Введіть усі поля нотатки-зразка.");
-                        Note sample = readNote(scanner);
-                        int index = notebook.findNote(sample);
-                        if (index == -1)
-                        {
-                            System.out.println("Нотатку з повним збігом не знайдено.");
-                        }
-                        else
-                        {
-                            System.out.println("Знайдено нотатку №" + (index + 1));
-                            display.show(notebook.getNote(index + 1));
-                        }
-                    }
-                    catch (NoteException error)
-                    {
-                        System.out.println("Пошук скасовано: " + error.getMessage());
-                    }
-                }
-                else if (choice.equals("6"))
-                {
-                    openNote(scanner, notebook, display);
-                }
-                else if (choice.equals("7"))
-                {
-                    chooseFormatter(scanner, display);
-                }
-                else if (choice.equals("8"))
-                {
-                    showFormatExamples(scanner, notebook.getNotes(), notebook.getNoteCount());
-                }
-                else if (choice.equals("9"))
-                {
-                    printStatistics(statistics);
-                }
-                else if (choice.equals("10"))
-                {
-                    InheritanceDemo.run();
-                }
-                else if (choice.equals("11"))
-                {
-                    showTypeGuide(scanner, notebook);
-                }
-                else if (choice.equals("0"))
+                if (choice.equals("0"))
                 {
                     break;
                 }
-                else
+                try
                 {
-                    System.out.println("Такого варіанту немає, спробуйте ще раз.");
+                    if (choice.equals("1"))
+                    {
+                        addNotes(scanner, notebook, ids);
+                    }
+                    else if (choice.equals("2"))
+                    {
+                        printTitles(notebook.getNotes());
+                    }
+                    else if (choice.equals("3"))
+                    {
+                        searchByPriority(scanner, notebook, display);
+                    }
+                    else if (choice.equals("4"))
+                    {
+                        showSorted(notebook, notebook.findAllSortedByPriority());
+                    }
+                    else if (choice.equals("5"))
+                    {
+                        if (notebook.getNoteCount() == 0)
+                        {
+                            System.out.println("Поки немає нотаток.");
+                            continue;
+                        }
+                        System.out.println("Введіть поля зразка. Він не додається до блокнота.");
+                        Note sample = readNote(scanner, ids.next());
+                        Note found = notebook.findNoteByContent(sample);
+                        if (found == null)
+                        {
+                            System.out.println("Нотатку з таким вмістом не знайдено.");
+                        }
+                        else
+                        {
+                            display.show(found);
+                        }
+                    }
+                    else if (choice.equals("6"))
+                    {
+                        Note note = selectNote(scanner, notebook);
+                        if (note != null)
+                        {
+                            display.show(note);
+                        }
+                    }
+                    else if (choice.equals("7"))
+                    {
+                        chooseFormatter(scanner, display);
+                    }
+                    else if (choice.equals("8"))
+                    {
+                        Note note = selectNote(scanner, notebook);
+                        if (note != null)
+                        {
+                            for (NoteFormatter formatter : NoteFormatterFactory.createAll())
+                            {
+                                System.out.println("Формат: " + formatter.getName());
+                                formatter.print(note);
+                            }
+                        }
+                    }
+                    else if (choice.equals("9"))
+                    {
+                        printStatistics(statistics, notebook);
+                    }
+                    else if (choice.equals("10"))
+                    {
+                        InheritanceDemo.run();
+                    }
+                    else if (choice.equals("11"))
+                    {
+                        Note note = selectNote(scanner, notebook);
+                        if (note != null)
+                        {
+                            System.out.println(NoteTypeGuide.describe(note));
+                        }
+                    }
+                    else if (choice.equals("12"))
+                    {
+                        Note old = selectNote(scanner, notebook);
+                        if (old != null)
+                        {
+                            System.out.println("Введіть усі нові поля. ID залишається " + old.getId() + ".");
+                            Note updated = readNote(scanner, old.getId());
+                            notebook.updateNote(updated);
+                            System.out.println("Нотатку оновлено. Кількість: " + notebook.getNoteCount());
+                        }
+                    }
+                    else if (choice.equals("13"))
+                    {
+                        printTitles(notebook.getNotes());
+                        long id = readId(scanner, "ID для видалення (0 — назад): ");
+                        if (id != 0)
+                        {
+                            System.out.println(notebook.deleteNote(id)
+                                ? "Нотатку видалено. Результат delete: true."
+                                : "Такої нотатки немає. Результат delete: false.");
+                        }
+                    }
+                    else if (choice.equals("14"))
+                    {
+                        showSorted(notebook, notebook.findAllSortedByName());
+                    }
+                    else if (choice.equals("15"))
+                    {
+                        showSorted(notebook, notebook.findAllSortedByNameAndByPriority());
+                    }
+                    else if (choice.equals("16"))
+                    {
+                        CrudDemo.run();
+                    }
+                    else if (choice.equals("17"))
+                    {
+                        manageCategories(scanner, categories, ids);
+                    }
+                    else
+                    {
+                        System.out.println("Такого пункту меню немає.");
+                    }
+                }
+                catch (EntityNotFoundException error)
+                {
+                    System.out.println(error.getMessage() + " Запитаний ID: " + error.getId());
+                }
+                catch (InvalidPriorityException error)
+                {
+                    System.out.println(error.getMessage() + " Введено: " + error.getInvalidPriority());
+                    System.out.println("Зміни не збережено.");
+                }
+                catch (NoteException error)
+                {
+                    System.out.println(error.getMessage() + " Зміни не збережено.");
                 }
             }
         }
         catch (NoSuchElementException error)
         {
-            System.out.println("Введення завершено. Програма завершує роботу.");
+            System.out.println("Введення завершено.");
         }
         finally
         {
@@ -208,50 +195,98 @@ public class Main
         }
     }
 
-    static Note readNote(Scanner scanner) throws NoteException
+    static void printMenu(NoteDisplay display)
+    {
+        System.out.println();
+        System.out.println("Personal-notate | ЛР №7–9 | Формат: " + display.getFormatName());
+        System.out.println("1. Додати нотатки");
+        System.out.println("2. Список назв та ID");
+        System.out.println("3. Показати та порахувати за пріоритетом");
+        System.out.println("4. Показати копію за пріоритетом");
+        System.out.println("5. Знайти за повним збігом вмісту");
+        System.out.println("6. Відкрити нотатку за ID");
+        System.out.println("7. Змінити формат відображення");
+        System.out.println("8. Порівняти формати нотатки");
+        System.out.println("9. Статистика");
+        System.out.println("10. Демонстрація наслідування");
+        System.out.println("11. Підказка для типу нотатки");
+        System.out.println("12. Оновити нотатку за ID");
+        System.out.println("13. Видалити нотатку за ID");
+        System.out.println("14. Показати копію за назвою");
+        System.out.println("15. Показати копію за назвою та пріоритетом");
+        System.out.println("16. Демонстрація CRUD, колекцій і сортування");
+        System.out.println("17. Каталог категорій");
+        System.out.println("0. Вийти");
+        System.out.print("Оберіть дію: ");
+    }
+
+    static void addNotes(Scanner scanner, Notebook notebook, IdGenerator ids)
+    {
+        int amount = readInt(scanner, "Скільки нотаток додати за раз (1–100): ", 1, 100);
+        for (int i = 0; i < amount; i++)
+        {
+            long id = ids.next();
+            boolean created = false;
+            while (!created)
+            {
+                System.out.println("Нова нотатка, ID: " + id);
+                try
+                {
+                    notebook.addNote(readNote(scanner, id));
+                    created = true;
+                }
+                catch (InvalidPriorityException error)
+                {
+                    System.out.println(error.getMessage() + " Введено: " + error.getInvalidPriority());
+                    System.out.println("Введіть нотатку повторно.");
+                }
+                catch (NoteException error)
+                {
+                    System.out.println(error.getMessage());
+                    System.out.println("Введіть нотатку повторно.");
+                }
+            }
+        }
+        System.out.println("Додано нотаток: " + amount);
+    }
+
+    static Note readNote(Scanner scanner, long id) throws NoteException
     {
         System.out.println("1. Текстова нотатка");
         System.out.println("2. Список справ");
         System.out.println("3. Список покупок");
-        int type = readInt(scanner, "Оберіть тип нотатки: ", 1, 3);
-        System.out.print("Введіть назву нотатки: ");
+        int type = readInt(scanner, "Оберіть тип: ", 1, 3);
+        System.out.print("Назва: ");
         String title = scanner.nextLine();
-        System.out.print("Введіть текст нотатки: ");
+        System.out.print("Текст: ");
         String text = scanner.nextLine();
-        System.out.print("Введіть категорію нотатки: ");
+        System.out.print("Категорія (довільний текст): ");
         String category = scanner.nextLine();
-
-        int priority = readInt(scanner,
-            "Введіть пріоритет (1 — найвищий, 10 — найнижчий): ",
+        int priority = readInt(scanner, "Пріоритет (1 — найвищий, 10 — найнижчий): ",
             Integer.MIN_VALUE, Integer.MAX_VALUE);
         try
         {
             if (type == 1)
             {
-                System.out.print("Джерело запису (Enter — не вказано): ");
-                String source = scanner.nextLine();
-                return new TextNote(title, text, category, priority, source);
+                System.out.print("Джерело (можна пропустити): ");
+                return new TextNote(id, title, text, category, priority, scanner.nextLine());
             }
-
-            int itemCount = readInt(scanner, "Скільки пунктів у списку (1–20): ", 1, 20);
-            String[] items = new String[itemCount];
-            boolean[] completed = new boolean[itemCount];
-            for (int i = 0; i < itemCount; i++)
+            int count = readInt(scanner, "Кількість пунктів (1–20): ", 1, 20);
+            String[] items = new String[count];
+            boolean[] completed = new boolean[count];
+            for (int i = 0; i < count; i++)
             {
                 System.out.print("Пункт №" + (i + 1) + ": ");
                 items[i] = scanner.nextLine();
-                completed[i] = readInt(scanner,
-                    "Уже виконано / придбано? (1 — так, 0 — ні): ", 0, 1) == 1;
+                completed[i] = readInt(scanner, "Виконано / придбано? (1 — так, 0 — ні): ", 0, 1) == 1;
             }
-
             if (type == 3)
             {
-                System.out.print("Магазин (Enter — не вказано): ");
-                String store = scanner.nextLine();
-                return new ShoppingListNote(title, text, category, priority,
-                    items, completed, store);
+                System.out.print("Магазин (можна пропустити): ");
+                return new ShoppingListNote(id, title, text, category, priority,
+                    items, completed, scanner.nextLine());
             }
-            return new ChecklistNote(title, text, category, priority, items, completed);
+            return new ChecklistNote(id, title, text, category, priority, items, completed);
         }
         catch (NoteException error)
         {
@@ -279,147 +314,213 @@ public class Main
             catch (InputMismatchException error)
             {
                 scanner.nextLine();
-                System.out.println("Помилка: потрібно ввести ціле число типу int.");
+                System.out.println("Потрібне ціле число типу int.");
             }
         }
     }
 
-    static void openNote(Scanner scanner, Notebook notebook, NoteDisplay display)
+    static long readId(Scanner scanner, String message)
     {
-        Note[] notes = notebook.getNotes();
-        int noteCount = notebook.getNoteCount();
-        if (noteCount == 0)
+        while (true)
         {
-            System.out.println("Поки немає створених нотаток.");
-            return;
-        }
-
-        for (int i = 0; i < noteCount; i++)
-        {
-            System.out.printf("%d. %s%n", i + 1, notes[i].getTitle());
-        }
-        System.out.print("Введіть номер нотатки (0 — назад): ");
-        try
-        {
-            int number = Integer.parseInt(scanner.nextLine().trim());
-            if (number == 0)
+            System.out.print(message);
+            try
             {
-                return;
+                long id = Long.parseLong(scanner.nextLine().trim());
+                if (id >= 0)
+                {
+                    return id;
+                }
+                System.out.println("ID має бути додатним; 0 означає повернення.");
             }
-            display.show(notebook.getNote(number));
-        }
-        catch (NumberFormatException error)
-        {
-            System.out.println("Номер має бути цілим числом типу int. Повернення до меню.");
-        }
-        catch (IndexOutOfBoundsException error)
-        {
-            System.out.println(error.getMessage());
+            catch (NumberFormatException error)
+            {
+                System.out.println("ID має бути цілим числом типу long.");
+            }
         }
     }
 
-    static void printNotes(Note[] notes, NoteDisplay display)
+    static String readName(Scanner scanner, String message)
     {
-        int number = 1;
+        while (true)
+        {
+            System.out.print(message);
+            String name = scanner.nextLine();
+            if (!name.isBlank())
+            {
+                return name;
+            }
+            System.out.println("Назва не може бути порожньою.");
+        }
+    }
+
+    static void printTitles(List<Note> notes)
+    {
+        if (notes.isEmpty())
+        {
+            System.out.println("Поки немає нотаток.");
+        }
         for (Note note : notes)
         {
-            if (note == null)
-            {
-                continue;
-            }
-            System.out.println();
-            System.out.println("Нотатка №" + number);
-            display.show(note);
-            number++;
+            System.out.printf("ID %d: %s%n", note.getId(), note.getName());
         }
-        if (number == 1)
+    }
+
+    static Note selectNote(Scanner scanner, Notebook notebook)
+    {
+        printTitles(notebook.getNotes());
+        long id = readId(scanner, "Введіть ID (0 — назад): ");
+        return id == 0 ? null : notebook.getNote(id);
+    }
+
+    static void searchByPriority(Scanner scanner, Notebook notebook, NoteDisplay display)
+    {
+        if (notebook.getNoteCount() == 0)
         {
-            System.out.println("Поки немає створених нотаток.");
+            System.out.println("Поки немає нотаток.");
+            return;
+        }
+        int priority = readInt(scanner, "Пріоритет для пошуку (1–10): ", 1, 10);
+        int count = 0;
+        for (Note note : notebook.getNotes())
+        {
+            if (note.getPriority() == priority)
+            {
+                display.show(note);
+                count++;
+            }
+        }
+        System.out.println("Кількість знайдених: " + count);
+    }
+
+    static void showSorted(Notebook notebook, List<Note> sorted)
+    {
+        System.out.println("До сортування: порядок додавання");
+        printRows(notebook.getNotes());
+        System.out.println("Відсортована копія:");
+        printRows(sorted);
+        System.out.println("Сховище після сортування:");
+        printRows(notebook.getNotes());
+    }
+
+    static void printRows(List<Note> notes)
+    {
+        if (notes.isEmpty())
+        {
+            System.out.println("Список порожній.");
+        }
+        for (Note note : notes)
+        {
+            System.out.printf("ID %d | %s | пріоритет: %d%n",
+                note.getId(), note.getName(), note.getPriority());
         }
     }
 
     static void chooseFormatter(Scanner scanner, NoteDisplay display)
     {
         NoteFormatter[] formatters = NoteFormatterFactory.createAll();
-
         for (int i = 0; i < formatters.length; i++)
         {
             NoteFormatter formatter = formatters[i];
             System.out.printf("%d. %s", i + 1, formatter.getName());
-            if (formatter instanceof Describable)
+            if (formatter instanceof Describable describable)
             {
-                Describable description = (Describable) formatter;
-                System.out.print(" — " + description.getDescription());
+                System.out.print(" — " + describable.getDescription());
             }
             System.out.println();
         }
-
         int number = readInt(scanner, "Оберіть формат (0 — назад): ", 0, formatters.length);
-        if (number == 0)
-        {
-            return;
-        }
-
-        display.setFormatter(formatters[number - 1]);
-        System.out.println("Обрано формат: " + display.getFormatName());
-    }
-
-    static void showFormatExamples(Scanner scanner, Note[] notes, int noteCount)
-    {
-        if (noteCount == 0)
-        {
-            System.out.println("Поки немає створених нотаток.");
-            return;
-        }
-
-        for (int i = 0; i < noteCount; i++)
-        {
-            System.out.printf("%d. %s%n", i + 1, notes[i].getTitle());
-        }
-        int number = readInt(scanner, "Оберіть нотатку (0 — назад): ", 0, noteCount);
-        if (number == 0)
-        {
-            return;
-        }
-
-        Note note = notes[number - 1];
-        NoteFormatter[] formatters = NoteFormatterFactory.createAll();
-
-        for (NoteFormatter formatter : formatters)
-        {
-            System.out.println();
-            System.out.println("Формат: " + formatter.getName());
-            formatter.print(note);
-        }
-    }
-
-    static void printStatistics(NoteStatisticsObserver statistics)
-    {
-        System.out.println("Додано за сеанс: " + statistics.getAddedCount());
-        for (int priority = 1; priority <= 10; priority++)
-        {
-            System.out.printf("Пріоритет %d: %d%n",
-                priority, statistics.getCountByPriority(priority));
-        }
-    }
-
-    static void showTypeGuide(Scanner scanner, Notebook notebook)
-    {
-        if (notebook.getNoteCount() == 0)
-        {
-            System.out.println("Поки немає створених нотаток.");
-            return;
-        }
-        Note[] notes = notebook.getNotes();
-        for (int i = 0; i < notes.length; i++)
-        {
-            System.out.printf("%d. %s%n", i + 1, notes[i].getTitle());
-        }
-        int number = readInt(scanner, "Оберіть нотатку (0 — назад): ",
-            0, notebook.getNoteCount());
         if (number != 0)
         {
-            System.out.println(NoteTypeGuide.describe(notebook.getNote(number)));
+            display.setFormatter(formatters[number - 1]);
+        }
+    }
+
+    static void printStatistics(NoteStatisticsObserver statistics, Notebook notebook)
+    {
+        System.out.println("Зараз у блокноті: " + notebook.getNoteCount());
+        System.out.println("Успішно додано за сеанс: " + statistics.getAddedCount());
+        System.out.println("Пріоритети на момент додавання (історія, без оновлень і видалень):");
+        for (int priority = 1; priority <= 10; priority++)
+        {
+            System.out.printf("Пріоритет %d: %d%n", priority, statistics.getCountByPriority(priority));
+        }
+    }
+
+    static void manageCategories(Scanner scanner, CRUDService<Category> categories, IdGenerator ids)
+    {
+        while (true)
+        {
+            System.out.println();
+            System.out.println("Каталог категорій");
+            System.out.println("1. Додати | 2. Переглянути | 3. Знайти за ID");
+            System.out.println("4. Оновити | 5. Видалити | 6. За назвою | 0. Назад");
+            System.out.print("Дія: ");
+            String choice = scanner.nextLine();
+            if (choice.equals("0"))
+            {
+                return;
+            }
+            try
+            {
+                if (choice.equals("1"))
+                {
+                    String name = readName(scanner, "Назва категорії: ");
+                    System.out.print("Опис: ");
+                    Category category = new Category(ids.next(), name, scanner.nextLine());
+                    categories.save(category);
+                    System.out.println("Додано категорію з ID " + category.getId());
+                }
+                else if (choice.equals("2"))
+                {
+                    EntityPrinter.printAll(categories.findAll());
+                }
+                else if (choice.equals("3"))
+                {
+                    long id = readId(scanner, "ID категорії (0 — назад): ");
+                    if (id != 0)
+                    {
+                        System.out.println(categories.findById(id));
+                    }
+                }
+                else if (choice.equals("4"))
+                {
+                    long id = readId(scanner, "ID для оновлення (0 — назад): ");
+                    if (id != 0)
+                    {
+                        categories.findById(id);
+                        String name = readName(scanner, "Нова назва: ");
+                        System.out.print("Новий опис: ");
+                        categories.save(new Category(id, name, scanner.nextLine()));
+                        System.out.println("Категорію оновлено. Кількість: " + categories.findAll().size());
+                    }
+                }
+                else if (choice.equals("5"))
+                {
+                    long id = readId(scanner, "ID для видалення (0 — назад): ");
+                    if (id != 0)
+                    {
+                        System.out.println("Результат delete: " + categories.delete(id));
+                    }
+                }
+                else if (choice.equals("6"))
+                {
+                    System.out.println("До сортування:");
+                    EntityPrinter.printAll(categories.findAll());
+                    System.out.println("Відсортована копія:");
+                    EntityPrinter.printAll(categories.findAllSortedByName());
+                    System.out.println("Сховище після сортування:");
+                    EntityPrinter.printAll(categories.findAll());
+                }
+                else
+                {
+                    System.out.println("Такого пункту немає.");
+                }
+            }
+            catch (EntityNotFoundException error)
+            {
+                System.out.println(error.getMessage());
+            }
         }
     }
 }

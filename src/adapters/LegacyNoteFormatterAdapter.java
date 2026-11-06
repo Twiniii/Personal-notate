@@ -30,7 +30,7 @@ public class LegacyNoteFormatterAdapter implements NoteFormatter, Describable
     @Override
     public String format(Note note)
     {
-        return renderer.renderRecord(
+        return "ID: " + note.getId() + "\n" + renderer.renderRecord(
             note.getTitle(), note.getText(), note.getCategory(), note.getPriority()
         );
     }

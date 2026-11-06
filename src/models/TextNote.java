@@ -8,17 +8,17 @@ public final class TextNote extends Note
 {
     private final String source;
 
-    public TextNote(String title, String text, String category, int priority)
+    public TextNote(long id, String title, String text, String category, int priority)
         throws NoteException
     {
-        this(title, text, category, priority, "");
+        this(id, title, text, category, priority, "");
         ConstructorTrace.log("TextNote: короткий конструктор після this(...)");
     }
 
-    public TextNote(String title, String text, String category, int priority, String source)
+    public TextNote(long id, String title, String text, String category, int priority, String source)
         throws NoteException
     {
-        super(title, text, category, priority);
+        super(id, title, text, category, priority);
         this.source = Objects.requireNonNullElse(source, "");
         ConstructorTrace.log("TextNote: джерело");
     }
@@ -49,19 +49,13 @@ public final class TextNote extends Note
     }
 
     @Override
-    public boolean equals(Object object)
+    public boolean hasSameContent(Note other)
     {
-        if (!super.equals(object))
+        if (!super.hasSameContent(other))
         {
             return false;
         }
-        TextNote other = (TextNote) object;
-        return Objects.equals(source, other.source);
-    }
-
-    @Override
-    public int hashCode()
-    {
-        return Objects.hash(super.hashCode(), source);
+        TextNote note = (TextNote) other;
+        return Objects.equals(source, note.source);
     }
 }

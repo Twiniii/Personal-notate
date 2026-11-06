@@ -9,18 +9,18 @@ public sealed class ChecklistNote extends Note permits ShoppingListNote
     private final String[] items;
     private final boolean[] completed;
 
-    public ChecklistNote(String title, String text, String category, int priority,
+    public ChecklistNote(long id, String title, String text, String category, int priority,
         String[] items) throws NoteException
     {
-        this(title, text, category, priority, items,
+        this(id, title, text, category, priority, items,
             items == null ? null : new boolean[items.length]);
         ConstructorTrace.log("ChecklistNote: короткий конструктор після this(...)");
     }
 
-    public ChecklistNote(String title, String text, String category, int priority,
+    public ChecklistNote(long id, String title, String text, String category, int priority,
         String[] items, boolean[] completed) throws NoteException
     {
-        super(title, text, category, priority);
+        super(id, title, text, category, priority);
         if (items == null || completed == null || items.length == 0
             || items.length != completed.length)
         {
@@ -100,23 +100,14 @@ public sealed class ChecklistNote extends Note permits ShoppingListNote
     }
 
     @Override
-    public boolean equals(Object object)
+    public boolean hasSameContent(Note other)
     {
-        if (!super.equals(object))
+        if (!super.hasSameContent(other))
         {
             return false;
         }
-        ChecklistNote other = (ChecklistNote) object;
-        return Arrays.equals(items, other.items)
-            && Arrays.equals(completed, other.completed);
-    }
-
-    @Override
-    public int hashCode()
-    {
-        int result = super.hashCode();
-        result = 31 * result + Arrays.hashCode(items);
-        result = 31 * result + Arrays.hashCode(completed);
-        return result;
+        ChecklistNote note = (ChecklistNote) other;
+        return Arrays.equals(items, note.items)
+            && Arrays.equals(completed, note.completed);
     }
 }

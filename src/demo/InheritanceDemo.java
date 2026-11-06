@@ -24,63 +24,49 @@ public final class InheritanceDemo
             System.out.println("=== Ланцюжки конструкторів ===");
             ConstructorTrace.setEnabled(true);
             Note[] examples = {
-                new TextNote("Java", "Повторити наслідування", "Навчання", 2),
-                new ChecklistNote("Справи", "Підготовка до пари", "Навчання", 3,
+                new TextNote(1001, "Java", "Повторити наслідування", "Навчання", 2),
+                new ChecklistNote(1002, "Справи", "Підготовка до пари", "Навчання", 3,
                     new String[] {"Прочитати README", "Запустити програму"}),
-                new ShoppingListNote("Покупки", "На вечерю", "Особисте", 1,
+                new ShoppingListNote(1003, "Покупки", "На вечерю", "Особисте", 1,
                     new String[] {"Хліб", "Молоко"}, "Супермаркет")
             };
             ConstructorTrace.setEnabled(false);
-
             System.out.println("=== Поліморфізм: масив Note[] ===");
             for (Note note : examples)
             {
                 System.out.println(note.getTypeName() + ": " + note.getSummary());
-                System.out.println(note.toString());
+                System.out.println(note);
                 System.out.println();
             }
-
             System.out.println("=== Базове посилання й instanceof ===");
             Note reference = examples[2];
-            System.out.println("Оголошений тип reference: Note");
-            System.out.println("Фактичний тип: " + reference.getClass().getSimpleName());
+            System.out.println("Оголошений тип: Note; фактичний: "
+                + reference.getClass().getSimpleName());
             if (reference instanceof ChecklistNote checklist)
             {
-                System.out.println("Специфічний метод getRemainingCount(): "
-                    + checklist.getRemainingCount());
+                System.out.println("Залишилося пунктів: " + checklist.getRemainingCount());
             }
-
             System.out.println("=== Sealed і switch за типом ===");
             for (Note note : examples)
             {
                 System.out.println(NoteTypeGuide.describe(note));
             }
-
-            System.out.println("=== Симетрія equals() ===");
-            ChecklistNote base = new ChecklistNote("Список", "", "Особисте", 2,
-                new String[] {"Хліб"});
-            ShoppingListNote sub = new ShoppingListNote("Список", "", "Особисте", 2,
-                new String[] {"Хліб"}, "Магазин А");
-            ShoppingListNote same = new ShoppingListNote("Список", "", "Особисте", 2,
-                new String[] {"Хліб"}, "Магазин А");
-            ShoppingListNote otherStore = new ShoppingListNote("Список", "", "Особисте", 2,
-                new String[] {"Хліб"}, "Магазин Б");
-
-            System.out.println("ChecklistNote.equals(ShoppingListNote): " + base.equals(sub));
-            System.out.println("ShoppingListNote.equals(ChecklistNote): " + sub.equals(base));
-            System.out.println("Однаковий тип і всі поля: " + sub.equals(same));
-            System.out.println("Їхні hashCode однакові: " + (sub.hashCode() == same.hashCode()));
-            System.out.println("Інший магазин: " + sub.equals(otherStore));
-            Note baseReference = sub;
-            System.out.println("Той самий об'єкт через Note: "
-                + (baseReference.equals(sub) && sub.equals(baseReference)));
-
-            System.out.println("=== Композиція з ЛР №4–5 ===");
+            System.out.println("=== Нова рівність за ID та окреме порівняння вмісту ===");
+            Note sameId = new TextNote(1001, "Java оновлено", "Інший текст", "Навчання", 4);
+            Note sameContent = new TextNote(1004, "Java", "Повторити наслідування", "Навчання", 2);
+            System.out.println("Той самий ID, змінені дані: " + examples[0].equals(sameId));
+            System.out.println("Симетрія: " + sameId.equals(examples[0]));
+            System.out.println("Хеші рівних сутностей однакові: "
+                + (examples[0].hashCode() == sameId.hashCode()));
+            System.out.println("Інший ID, той самий вміст — equals: " + examples[0].equals(sameContent));
+            System.out.println("Інший ID, той самий вміст — hasSameContent: "
+                + examples[0].hasSameContent(sameContent));
+            System.out.println("=== Композиція ===");
             NoteDisplay display = new NoteDisplay(NoteFormatterFactory.create("1"));
             display.show(examples[2]);
             display.setFormatter(NoteFormatterFactory.create("2"));
             display.show(examples[2]);
-            System.out.println("NoteDisplay має форматер; він не є форматером або нотаткою.");
+            System.out.println("NoteDisplay містить форматер, який можна замінити.");
             System.out.println("Демонстраційні об'єкти не додано до вашого блокнота.");
         }
         catch (NoteException error)

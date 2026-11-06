@@ -5,24 +5,17 @@ import exceptions.InvalidPriorityException;
 import diagnostics.ConstructorTrace;
 import java.util.Objects;
 
-public abstract sealed class Note permits TextNote, ChecklistNote
+public abstract sealed class Note extends BaseEntity permits TextNote, ChecklistNote
 {
 
-    private final String title;
     private final String text;
     private final String category;
     private final int priority;
 
-    protected Note(String title, String text, String category, int priority)
+    protected Note(long id, String title, String text, String category, int priority)
         throws InvalidTitleException, InvalidPriorityException
     {
-        if (title == null || title.isBlank())
-        {
-            throw new InvalidTitleException(
-                "Назва нотатки не може бути порожньою або містити лише пробіли.",
-                title
-            );
-        }
+        super(id, requireTitle(title));
 
         if (priority < 1 || priority > 10)
         {
@@ -31,7 +24,6 @@ public abstract sealed class Note permits TextNote, ChecklistNote
             );
         }
 
-        this.title = title;
         this.text = text;
         this.category = category;
         this.priority = priority;
@@ -40,7 +32,7 @@ public abstract sealed class Note permits TextNote, ChecklistNote
 
     public String getTitle()
     {
-        return title;
+        return getName();
     }
 
     public String getText()
@@ -65,33 +57,29 @@ public abstract sealed class Note permits TextNote, ChecklistNote
     @Override
     public String toString()
     {
-        return "Назва: " + title
+        return super.toString()
             + "\nТекст: " + text
             + "\nКатегорія: " + category
             + "\nПріоритет: " + priority;
     }
 
-    @Override
-    public boolean equals(Object object)
+    public boolean hasSameContent(Note other)
     {
-        if (this == object)
-        {
-            return true;
-        }
-        if (object == null || getClass() != object.getClass())
-        {
-            return false;
-        }
-        Note other = (Note) object;
-        return Objects.equals(title, other.title)
+        return other != null && getClass() == other.getClass()
+            && Objects.equals(getName(), other.getName())
             && Objects.equals(text, other.text)
             && Objects.equals(category, other.category)
             && priority == other.priority;
     }
 
-    @Override
-    public int hashCode()
+    private static String requireTitle(String title) throws InvalidTitleException
     {
-        return Objects.hash(title, text, category, priority);
+        if (title == null || title.isBlank())
+        {
+            throw new InvalidTitleException(
+                "Назва нотатки не може бути порожньою або містити лише пробіли.", title
+            );
+        }
+        return title;
     }
 }
